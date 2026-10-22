@@ -1,0 +1,9 @@
+{
+  // 总入口：tsc -b 会依次检查网页代码、离线缓存（service worker）代码和 Node 端代码。
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.sw.json" },
+    { "path": "./tsconfig.node.json" }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  // 在 Node 里跑的东西：Vite / Playwright 配置、浏览器测试、scripts/ 里的检查脚本。
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
+    "lib": ["ES2023", "DOM"],
+    "types": ["node"],
+    "module": "nodenext",
+    "moduleResolution": "nodenext"
+  },
+  "include": ["vite.config.ts", "playwright.config.ts", "vite-plugins", "scripts", "e2e"]
+}

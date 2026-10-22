@@ -1,0 +1,124 @@
+/*
+ * 加载页、错误页（居中、最宽 480、内容多就可以滑）。结果页在 results.css。
+ */
+
+.status-screen {
+  justify-content: center;
+}
+
+.status-screen__body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 30rem;
+  margin: auto;
+  padding: 1.5rem max(2rem, env(safe-area-inset-right)) 2rem max(2rem, env(safe-area-inset-left));
+  text-align: center;
+}
+
+.status-screen__title {
+  font-size: var(--fs-title-l);
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.status-screen__message {
+  color: var(--color-on-surface-variant);
+  line-height: 1.6;
+}
+
+.status-screen__detail {
+  font-size: var(--fs-tiny);
+  color: var(--color-on-surface-variant);
+  overflow-wrap: anywhere;
+}
+
+.status-screen__action {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  width: 100%;
+}
+
+.status-screen__note {
+  font-size: var(--fs-tiny);
+  color: var(--color-on-surface-variant);
+}
+
+/* ---- 加载页：大 emoji 一直左右摆、一直放大缩小 ---- */
+.loading-emoji {
+  display: inline-block;
+  font-size: 96px;
+  line-height: 1.15;
+  animation: wobble 450ms cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
+}
+
+.loading-emoji__inner {
+  display: inline-block;
+  animation: breathe 600ms cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
+}
+
+@keyframes wobble {
+  from {
+    transform: rotate(-12deg);
+  }
+  to {
+    transform: rotate(12deg);
+  }
+}
+
+@keyframes breathe {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.15);
+  }
+}
+
+.progress {
+  position: relative;
+  width: 60%;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--color-surface-container-highest);
+}
+
+.progress__bar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 40%;
+  border-radius: 2px;
+  background: var(--color-primary);
+  animation: indeterminate 1.4s var(--ease-standard) infinite;
+}
+
+@keyframes indeterminate {
+  from {
+    left: -40%;
+  }
+  to {
+    left: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-emoji,
+  .loading-emoji__inner {
+    animation: none;
+  }
+
+  .progress__bar {
+    animation: none;
+    left: 30%;
+  }
+}
+
+.error-emoji {
+  font-size: 72px;
+  line-height: 1.15;
+}

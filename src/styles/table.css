@@ -1,0 +1,949 @@
+/*
+ * 👥 饭桌模式（安卓 ui/TableOverlay.kt，功能清单第十四节）：第一页、✂️ 每人划一刀、🙈 暗中出拳。
+ * 外框用游戏层的 .game-layer（页面底色挡住列表、左右 16px 加安全区）；饭桌层只是淡入淡出。
+ * 手机优先：单栏最宽 520 置中；手机横屏（很矮又够宽）左右两栏。字号用 rem，当图案用的 emoji 用 px。
+ */
+
+/* ---------------------------------------------------------------- 外框 */
+.table-layer {
+  padding-top: 12px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  animation: fade-in var(--motion-medium) var(--ease-out);
+}
+
+.table-scene {
+  animation: fade-in var(--motion-medium) var(--ease-out);
+}
+
+.table-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 32.5rem;
+  margin-inline: auto;
+  text-align: center;
+}
+
+.table-panes {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 20px;
+  width: 100%;
+  max-width: 53.75rem;
+  margin-inline: auto;
+}
+
+.table-pane {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  text-align: center;
+}
+
+/* ---------------------------------------------------------------- 第一页 */
+.table-title {
+  font-size: var(--fs-title-l);
+  font-weight: 900;
+  line-height: 1.3;
+  color: var(--color-primary);
+}
+
+.table-subtitle {
+  font-size: var(--fs-title-m);
+  font-weight: 700;
+}
+
+/* 几个人？选中的那个主色底白字 */
+.people-row__btn.is-selected {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.people-row--small .people-row__btn {
+  max-width: 48px;
+}
+
+/* 6 个头像一排平均分：玩的亮（主色框）、不玩的淡 */
+.avatar-row {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 2px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.avatar-row__item {
+  min-width: 0;
+  opacity: 0.3;
+  transition: opacity var(--motion-medium) var(--ease-standard);
+}
+
+.avatar-row__item.is-playing {
+  opacity: 1;
+}
+
+.avatar-row__btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 4px 0;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--color-on-surface);
+  font: inherit;
+  transition: scale var(--motion-fast) var(--ease-standard);
+}
+
+.avatar-row__btn:active {
+  scale: 0.94;
+}
+
+.avatar-row__face {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: 2px solid var(--color-outline-variant);
+  border-radius: 50%;
+  background: var(--color-surface-container-high);
+  font-size: 28px;
+  line-height: 1;
+}
+
+.is-playing .avatar-row__face {
+  border-color: var(--color-primary);
+}
+
+.avatar-row__name {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: var(--fs-tiny);
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.table-note,
+.table-free-note {
+  font-size: var(--fs-tiny);
+  line-height: 1.45;
+  color: var(--color-on-surface-variant);
+}
+
+.table-candidates {
+  font-size: var(--fs-body);
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+/* ✂️ / 🙈 两张大卡；不能玩时变淡，说明换成原因 */
+.table-game-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  min-height: 76px;
+  padding: 10px 16px;
+  border: 2px solid var(--color-primary);
+  border-radius: 20px;
+  background: var(--color-primary-container);
+  color: var(--color-on-primary-container);
+  font: inherit;
+  text-align: start;
+  transition: scale var(--motion-fast) var(--ease-standard);
+}
+
+.table-game-card:active:not(:disabled) {
+  scale: 0.98;
+}
+
+.table-game-card:disabled {
+  opacity: 0.5;
+  border-color: var(--color-outline-variant);
+  background: var(--color-surface-container-high);
+  color: var(--color-on-surface-variant);
+}
+
+.table-game-card__title {
+  font-size: var(--fs-title-l);
+  font-weight: 900;
+  line-height: 1.3;
+}
+
+.table-game-card__desc {
+  font-size: var(--fs-small);
+  line-height: 1.45;
+}
+
+/* 很窄（浏览器放大 200%、最窄的手机加大字）：头像改成每行 3 个 */
+@container table-col (max-width: 17rem) {
+  .avatar-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    row-gap: 4px;
+  }
+}
+
+.table-column,
+.table-pane {
+  container: table-col / inline-size;
+}
+
+/* ---------------------------------------------------------------- ✂️ 每人划一刀 */
+.veto-board {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  width: 100%;
+  max-width: 32.5rem;
+  margin-inline: auto;
+}
+
+/* 手机横屏：左边说明、右边卡片（1.2 倍宽） */
+.veto-board--two-pane {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  align-items: start;
+  gap: 16px;
+  max-width: 53.75rem;
+}
+
+.veto-board--two-pane .veto-header {
+  align-self: center;
+  gap: 6px;
+}
+
+/* 最后一刀：整个画面一圈红框（盖在标题栏下面，不挡手指） */
+.veto-frame {
+  position: fixed;
+  z-index: 16;
+  inset: var(--topbar-height, calc(var(--topbar-h) + env(safe-area-inset-top))) 0 0 0;
+  border: 6px solid var(--color-error);
+  pointer-events: none;
+  animation: fade-in var(--motion-fast) linear;
+}
+
+.veto-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  text-align: center;
+}
+
+.veto-header__line {
+  font-size: var(--fs-small);
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--color-on-surface-variant);
+}
+
+/* 大标题先留两行高：每一刀换字时，下面的卡片不会跳 */
+.veto-heading {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: calc(2 * 1.33 * var(--fs-headline-s));
+}
+
+.veto-heading__text {
+  font-size: var(--fs-headline-s);
+  font-weight: 900;
+  line-height: 1.33;
+  color: var(--color-primary);
+}
+
+.veto-heading__text.is-last-cut {
+  color: var(--color-error);
+}
+
+/* 「还要划 2 刀」/「点错了？撤销」/「看结果 🎉」：一排的位置永远留着 */
+.veto-undo-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px 8px;
+  min-height: var(--tap);
+}
+
+.veto-undo-row__left {
+  font-size: var(--fs-small);
+  font-weight: 500;
+  color: var(--color-on-surface-variant);
+}
+
+.veto-undo-row__question {
+  font-size: var(--fs-small);
+  color: var(--color-on-surface-variant);
+}
+
+.veto-undo-row__undo {
+  font-size: var(--fs-title-s);
+  font-weight: 700;
+}
+
+.veto-undo-row__result {
+  font-size: var(--fs-title-s);
+}
+
+.veto-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.veto-cards--compact {
+  gap: 6px;
+}
+
+.veto-grid-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: stretch;
+  gap: 8px;
+}
+
+/* 一张卡的位置：被划掉时高度收到 0（下面的卡补上来）；撕开的两半不会飞出卡外 */
+.veto-slot {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.veto-card {
+  position: relative;
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  border-radius: 18px;
+  color: var(--color-on-surface);
+  text-align: start;
+  -webkit-tap-highlight-color: transparent;
+  transition: scale var(--motion-fast) var(--ease-standard);
+}
+
+.veto-card.is-enabled {
+  cursor: pointer;
+}
+
+.veto-card.is-enabled:active {
+  scale: 0.98;
+}
+
+.veto-card:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.veto-card__body {
+  position: relative;
+  display: block;
+  grid-area: 1 / 1;
+  height: 100%;
+  padding: 8px 10px;
+  border: 2px solid var(--color-outline-variant);
+  border-radius: 18px;
+  background: var(--color-surface-container-low);
+}
+
+.veto-card.is-winner .veto-card__body {
+  border: 3px solid var(--color-primary);
+  background: var(--color-primary-container);
+  color: var(--color-on-primary-container);
+}
+
+.veto-card--compact .veto-card__body {
+  padding: 6px 12px;
+}
+
+.veto-card--grid,
+.veto-card--grid .veto-card__body {
+  border-radius: 16px;
+}
+
+.veto-card--grid .veto-card__body {
+  padding: 8px;
+}
+
+.veto-card__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.veto-card__thumb {
+  flex: none;
+}
+
+.veto-card__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.veto-card--compact .veto-card__text {
+  gap: 1px;
+}
+
+.veto-card__name {
+  display: block;
+  overflow: hidden;
+  font-size: var(--fs-title-l);
+  font-weight: 900;
+  line-height: 1.3;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.veto-card--compact .veto-card__name {
+  font-size: var(--fs-title-m);
+}
+
+.veto-card__name--fit {
+  display: block;
+  font-size: var(--fs-title-m);
+  text-align: center;
+  text-overflow: clip;
+}
+
+.veto-facts {
+  font-size: var(--fs-small);
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.veto-facts__hours .price-hours__label {
+  font-weight: 700;
+}
+
+.veto-facts__detail {
+  font-weight: 400;
+}
+
+.veto-card .price-hours {
+  font-size: var(--fs-small);
+}
+
+.veto-card--grid .veto-facts,
+.veto-card--grid .price-hours {
+  font-size: var(--fs-tiny);
+}
+
+/* 红色印章「✂️ 不吃！」：从 2.2 倍盖下来（前 20%），转 −12° */
+.veto-card__stamp-box {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.veto-card__stamp {
+  padding: 2px 10px;
+  border: 3px solid #e03131;
+  border-radius: 8px;
+  color: #e03131;
+  font-size: var(--fs-title-l);
+  font-weight: 900;
+  line-height: 1.3;
+  white-space: nowrap;
+  rotate: -12deg;
+  animation: veto-stamp 1200ms linear forwards;
+}
+
+.veto-card--full .veto-card__stamp {
+  font-size: var(--fs-headline-m);
+}
+
+@keyframes veto-stamp {
+  0% {
+    opacity: 0;
+    scale: 2.2;
+  }
+
+  20%,
+  100% {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+/* 撕开：沿中间的锯齿线（8 个齿、齿深 = 宽 × 3%）分成两半，45%–80% 各自往外移、转、变淡 */
+.veto-half {
+  display: block;
+  grid-area: 1 / 1;
+  min-width: 0;
+}
+
+.veto-half--left {
+  clip-path: polygon(0 0, 50% 0, 53% 12.5%, 47% 25%, 53% 37.5%, 47% 50%, 53% 62.5%, 47% 75%, 53% 87.5%, 47% 100%, 50% 100%, 0 100%);
+  animation: veto-tear-left 1200ms linear forwards;
+}
+
+.veto-half--right {
+  clip-path: polygon(100% 0, 50% 0, 53% 12.5%, 47% 25%, 53% 37.5%, 47% 50%, 53% 62.5%, 47% 75%, 53% 87.5%, 47% 100%, 50% 100%, 100% 100%);
+  animation: veto-tear-right 1200ms linear forwards;
+}
+
+@keyframes veto-tear-left {
+  0%,
+  45% {
+    opacity: 1;
+    transform: none;
+  }
+
+  80%,
+  100% {
+    opacity: 0;
+    transform: translateX(-36px) rotate(-6deg);
+  }
+}
+
+@keyframes veto-tear-right {
+  0%,
+  45% {
+    opacity: 1;
+    transform: none;
+  }
+
+  80%,
+  100% {
+    opacity: 0;
+    transform: translateX(36px) rotate(6deg);
+  }
+}
+
+/* ---------------------------------------------------------------- 🙈 暗中出拳 */
+.secret-handover {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  max-width: 32.5rem;
+  margin-inline: auto;
+  padding-top: 12px;
+  text-align: center;
+}
+
+.secret-handover--two-pane {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  align-items: center;
+  justify-items: center;
+  gap: 24px;
+  max-width: 53.75rem;
+  padding-top: 0;
+}
+
+.secret-avatar {
+  display: grid;
+  place-items: center;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: var(--color-primary-container);
+}
+
+.secret-avatar__emoji {
+  font-size: 104px;
+  line-height: 1;
+}
+
+.secret-handover--two-pane .secret-avatar {
+  width: 120px;
+  height: 120px;
+}
+
+.secret-handover--two-pane .secret-avatar__emoji {
+  font-size: 80px;
+}
+
+.secret-words {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+}
+
+.secret-handover--two-pane .secret-words {
+  gap: 8px;
+}
+
+.secret-handover__title {
+  font-size: var(--fs-headline-m);
+  font-weight: 900;
+  line-height: 1.3;
+  color: var(--color-primary);
+}
+
+.secret-handover__peek {
+  font-size: var(--fs-title-l);
+  font-weight: 700;
+}
+
+.secret-progress {
+  font-size: var(--fs-small);
+  font-weight: 500;
+  color: var(--color-on-surface-variant);
+}
+
+.secret-big-btn {
+  min-height: 60px;
+  font-size: var(--fs-title-l);
+  font-weight: 700;
+}
+
+.secret-choose {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 32.5rem;
+  margin-inline: auto;
+  text-align: center;
+}
+
+.secret-choose--two-pane {
+  gap: 6px;
+  max-width: 47.5rem;
+}
+
+.secret-choose__title {
+  font-size: var(--fs-headline-s);
+  font-weight: 900;
+  line-height: 1.33;
+  color: var(--color-primary);
+}
+
+.secret-choose__hint {
+  font-size: var(--fs-small);
+  color: var(--color-on-surface-variant);
+}
+
+.secret-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+}
+
+/* 三张一起翻过去（绕垂直轴 300 毫秒）；重出时直接翻回来 */
+.secret-card {
+  min-width: 0;
+  perspective: 900px;
+}
+
+.secret-card__inner {
+  display: grid;
+  height: 100%;
+  transform-style: preserve-3d;
+}
+
+.secret-card.is-turned .secret-card__inner {
+  transform: rotateY(180deg);
+  transition: transform 300ms var(--ease-standard);
+}
+
+.secret-card__face {
+  grid-area: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+  min-height: 130px;
+  padding: 10px 4px;
+  border-radius: 20px;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.secret-card--tall .secret-card__face {
+  min-height: 240px;
+}
+
+.secret-card__front {
+  border: 2px solid var(--color-outline-variant);
+  background: var(--color-surface-container-low);
+  color: var(--color-on-surface);
+  font: inherit;
+  transition: scale var(--motion-fast) var(--ease-standard);
+}
+
+.secret-card__front:active:not(:disabled) {
+  scale: 0.96;
+}
+
+.secret-card__back {
+  transform: rotateY(180deg);
+  border: 2px solid var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.secret-card__emoji {
+  font-size: 44px;
+  line-height: 1.15;
+}
+
+.secret-card--tall .secret-card__emoji {
+  font-size: 64px;
+}
+
+.secret-card__hand {
+  font-size: var(--fs-title-l);
+  font-weight: 900;
+}
+
+.secret-card__name {
+  display: block;
+  width: 100%;
+  font-size: var(--fs-title-m);
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.secret-card__unknown {
+  font-size: var(--fs-tiny);
+  line-height: 1.35;
+  color: var(--color-on-surface-variant);
+}
+
+.secret-card__done {
+  font-size: var(--fs-title-l);
+  font-weight: 900;
+}
+
+.secret-pass-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+}
+
+.secret-pass-row .secret-pass {
+  width: 100%;
+}
+
+.secret-pass-row--two-pane {
+  flex-direction: row;
+  gap: 12px;
+}
+
+.secret-pass-row--two-pane .secret-pass {
+  flex: 1;
+  width: auto;
+}
+
+.secret-redo {
+  font-size: var(--fs-title-s);
+}
+
+.secret-all-done {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 32.5rem;
+  margin-inline: auto;
+  padding-top: 16px;
+  text-align: center;
+}
+
+.secret-all-done--two-pane {
+  gap: 8px;
+  padding-top: 0;
+}
+
+.secret-all-done__faces {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  font-size: 56px;
+  line-height: 1.15;
+}
+
+.secret-all-done--two-pane .secret-all-done__faces {
+  font-size: 40px;
+}
+
+.secret-all-done__note {
+  font-size: var(--fs-title-m);
+  font-weight: 700;
+}
+
+.secret-reveal-btn {
+  min-height: 64px;
+  font-size: var(--fs-title-l);
+  font-weight: 900;
+}
+
+.secret-reveal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 32.5rem;
+  margin-inline: auto;
+  text-align: center;
+}
+
+.secret-reveal--two-pane {
+  max-width: 47.5rem;
+}
+
+/* 横屏有平票：左边手势 + 判定，右边转盘 */
+.secret-reveal--split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+  max-width: 53.75rem;
+}
+
+.secret-reveal__start {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.secret-reveal__end {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+}
+
+.secret-reveal__hands {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* 每人一张小牌：背面（主色底、❓）→ 翻开（头像、手势、名字），每张翻 140 毫秒 */
+.reveal-hand {
+  width: 96px;
+  perspective: 600px;
+}
+
+.secret-reveal__hands.is-small .reveal-hand {
+  width: 84px;
+}
+
+.reveal-hand__inner {
+  display: grid;
+  transform-style: preserve-3d;
+}
+
+.reveal-hand.is-turned .reveal-hand__inner {
+  transform: rotateY(180deg);
+  transition: transform 140ms linear;
+}
+
+.reveal-hand.no-motion .reveal-hand__inner {
+  transition: none;
+}
+
+.reveal-hand__face {
+  grid-area: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 4px;
+  border: 2px solid var(--color-primary);
+  border-radius: 16px;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.reveal-hand__back {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.reveal-hand__front {
+  transform: rotateY(180deg);
+  background: var(--color-surface-container-low);
+  color: var(--color-on-surface);
+}
+
+.reveal-hand__avatar {
+  font-size: 28px;
+  line-height: 1.2;
+}
+
+.reveal-hand__hand {
+  font-size: 44px;
+  line-height: 1.2;
+}
+
+.secret-reveal__hands.is-small .reveal-hand__hand {
+  font-size: 36px;
+}
+
+.reveal-hand__name {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: var(--fs-tiny);
+  font-weight: 500;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.secret-reveal__verdict {
+  font-size: var(--fs-headline-s);
+  font-weight: 900;
+  line-height: 1.33;
+}
+
+.secret-reveal__wheel {
+  width: 100%;
+}
+
+.secret-see-result {
+  min-height: 52px;
+  font-size: var(--fs-title-m);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .table-layer,
+  .table-scene,
+  .veto-frame {
+    animation: none;
+  }
+}

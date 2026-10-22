@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108"><title>美食剪刀布</title>
+  <rect x="0" y="0" width="108" height="108" fill="#FF7A1A"/>
+  <circle cx="54" cy="54" r="40" fill="#FF9A4D"/>
+  <circle cx="54" cy="54" r="30" fill="#FFB070"/>
+  <g fill="none" stroke="#FFF4E6" stroke-width="2.6" stroke-linecap="round">
+    <path d="M44,40 C41,36 47,33 44,28"/>
+    <path d="M53,38 C50,34 56,31 53,26"/>
+  </g>
+  <path fill="#6B2E0E" d="M56.5,51 L75.6,29.4 L78.2,31.5 L60,52.5 Z"/>
+  <path fill="#8A3F14" d="M61.5,52 L80.4,34.4 L82.4,36.8 L64.6,53.4 Z"/>
+  <path fill="#FFE8A3" d="M31,52 C33,43 43,40 54,40 C65,40 75,43 77,52 Z"/>
+  <path fill="none" stroke="#F2C14E" stroke-width="1.8" stroke-linecap="round"
+    d="M37,50 C40,45 44,45 47,49 C50,45 54,45 57,49 C60,45 64,45 67,49 C69,46 71,46 72,48"/>
+  <path fill="#FFFFFF" d="M27,51 L81,51 C81,66.5 69,78 54,78 C39,78 27,66.5 27,51 Z"/>
+  <path fill="#C92A2A" d="M28.2,57 L79.8,57 C79.2,59.5 78.4,61.6 77.3,63.5 L30.7,63.5 C29.6,61.6 28.8,59.5 28.2,57 Z"/>
+  <path fill="#FFFFFF" d="M47,77 L61,77 L59.5,82 L48.5,82 Z"/>
+  <path fill="#E8590C" d="M27,50 L81,50 L81,52.5 L27,52.5 Z"/>
+</svg>

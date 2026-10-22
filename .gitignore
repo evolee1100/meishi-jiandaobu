@@ -1,0 +1,17 @@
+# 依赖和构建产物
+node_modules/
+dist/
+*.tsbuildinfo
+
+# 测试输出（截图默认也不提交，需要时用 npm run shots 重新拍）
+test-results/
+playwright-report/
+blob-report/
+screenshots/
+测试截图-开发中/
+
+# 环境变量：密钥绝不能放进项目里
+.env
+.env.*
+
+.DS_Store

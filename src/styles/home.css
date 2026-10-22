@@ -1,0 +1,812 @@
+/*
+ * 首页（功能清单第三节）。手机竖屏为主：单栏、间距 12（紧凑 10）；
+ * 可用高度 < 600（屏幕高 < 656）= 紧凑：格子、卡片、大按钮矮一点；
+ * 可用高度 < 420（屏幕高 < 476，手机横屏）：问候、饭签、大标题挤一行，不显示副标题，
+ * 底栏把「已选」「📏」两个胶囊竖着放在三个大按钮左边，大按钮横排、高 52。
+ */
+
+.home__content {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.25rem var(--gutter-right) 1rem var(--gutter-left);
+}
+
+/* ---- 演示黑条 ---- */
+.demo-banner {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0 0.75rem;
+  padding: 0.5rem 0.25rem 0.5rem 1rem;
+  border-radius: var(--radius-lg);
+  background: var(--color-inverse-surface);
+  color: var(--color-inverse-on-surface);
+}
+
+.demo-banner__icon {
+  flex: none;
+  font-size: 24px;
+  line-height: 1.2;
+}
+
+/* 窄的时候「关掉」放到下一行右边，字不会被挤成一个字一行 */
+@container (max-width: 20em) {
+  .demo-banner {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .demo-banner__off {
+    grid-column: 1 / -1;
+    justify-self: end;
+  }
+}
+
+.demo-banner__text {
+  min-width: 0;
+  padding-block: 0.25rem;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+}
+
+.demo-banner__off {
+  flex: none;
+  margin-left: auto;
+  min-width: var(--tap);
+  min-height: var(--tap);
+  padding-inline: 0.875rem;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--color-inverse-primary);
+  font-size: var(--fs-body);
+  font-weight: 700;
+}
+
+.demo-banner__off:active {
+  background: color-mix(in srgb, var(--color-inverse-primary) 18%, transparent);
+}
+
+/* ---- 没密钥的粉红卡 ---- */
+.no-key-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--color-primary-container) 60%, transparent);
+  text-align: center;
+}
+
+.no-key-card__text {
+  font-size: var(--fs-title-m);
+  font-weight: 500;
+  line-height: 1.5;
+  margin-bottom: 0.25rem;
+}
+
+/* ---- 定位问题卡、本月用完卡 ---- */
+.location-card,
+.quota-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-low);
+  text-align: center;
+}
+
+.location-card__text {
+  color: var(--color-error);
+  font-weight: 700;
+}
+
+.location-card__explain {
+  font-size: var(--fs-small);
+  color: var(--color-on-surface-variant);
+}
+
+.quota-card {
+  background: var(--color-tertiary-container);
+  color: var(--color-on-tertiary-container);
+  font-weight: 600;
+}
+
+/* ---- 问候 + 饭签 + 大标题 ---- */
+.home__hello {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.greeting-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.5rem;
+  max-width: 100%;
+  padding: 0.25rem 1rem;
+  border-radius: var(--radius-full);
+  background: var(--color-tertiary-container);
+  color: var(--color-on-tertiary-container);
+  font-size: var(--fs-title-s);
+  font-weight: 600;
+}
+
+.fortune-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  max-width: 100%;
+  padding: 0.25rem 1rem;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: var(--fs-title-s);
+  font-weight: 800;
+  transition: transform var(--motion-fast) var(--ease-standard);
+}
+
+.fortune-chip:active {
+  transform: scale(0.95);
+}
+
+.fortune-chip--drawn {
+  background: var(--color-secondary-container);
+  color: var(--color-on-secondary-container);
+}
+
+.fortune-chip__text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home__title {
+  flex-basis: 100%;
+  text-align: center;
+  font-size: clamp(1.875rem, 1.35rem + 2.6vw, 2.375rem);
+  font-weight: 900;
+  line-height: 1.2;
+  color: var(--color-primary);
+  letter-spacing: 0.02em;
+}
+
+.home__subtitle {
+  margin-top: -0.5rem;
+  text-align: center;
+  color: var(--color-on-surface-variant);
+}
+
+/* ---- 连吃提醒 ---- */
+.streak-card {
+  min-height: var(--tap);
+  padding: 0.75rem 1rem;
+  border: 0;
+  border-radius: var(--radius-lg);
+  background: var(--color-secondary-container);
+  color: var(--color-on-secondary-container);
+  font-weight: 700;
+  text-align: center;
+  transition: transform var(--motion-fast) var(--ease-standard);
+}
+
+.streak-card:active {
+  transform: scale(0.98);
+}
+
+/* ---- 🎲 随便挑卡片 ---- */
+.dice-entry {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: 56px;
+  padding: 0.5rem 1rem;
+  border: 0;
+  border-radius: 20px;
+  background: linear-gradient(90deg, var(--color-tertiary-container), var(--color-primary-container));
+  color: var(--color-on-tertiary-container);
+  text-align: start;
+  transition: transform var(--motion-fast) var(--ease-standard);
+}
+
+.dice-entry:active {
+  transform: scale(0.98);
+}
+
+.dice-entry__dice {
+  flex: none;
+  display: inline-block;
+  font-size: 28px;
+  line-height: 1.2;
+}
+
+.dice-entry__text {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-title-m);
+  font-weight: 800;
+}
+
+.dice-entry__chevron {
+  flex: none;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+/* 极窄（浏览器放大 + 大字）：骰子放在字上面，字有整行可以排 */
+@container (max-width: 12rem) {
+  .dice-entry {
+    flex-direction: column;
+    gap: 0.25rem;
+    padding-block: 0.75rem;
+    text-align: center;
+  }
+
+  .dice-entry__chevron {
+    display: none;
+  }
+}
+
+.shake-hint {
+  margin-top: -0.25rem;
+  text-align: center;
+  font-size: var(--fs-small);
+  color: var(--color-on-surface-variant);
+}
+
+.shake-hint--ask {
+  margin-top: -0.5rem;
+}
+
+/* ---- ① 想吃哪一类？ ---- */
+.step-label {
+  margin-top: 0.25rem;
+  font-size: var(--fs-title-m);
+  font-weight: 800;
+}
+
+.cuisine-wrap {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.cuisine-any,
+.cuisine-cell {
+  position: relative;
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-low);
+  color: var(--color-on-surface);
+  transition:
+    background-color 200ms,
+    border-color 200ms,
+    color 200ms,
+    transform var(--motion-fast) var(--ease-standard);
+}
+
+.cuisine-any:active,
+.cuisine-cell:active {
+  transform: scale(0.94);
+}
+
+.cuisine-any.is-selected,
+.cuisine-cell.is-selected {
+  background: var(--color-primary-container);
+  border-color: var(--color-primary);
+  box-shadow: inset 0 0 0 1px var(--color-primary);
+  color: var(--color-primary);
+}
+
+.cuisine-any {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 0.5rem 2rem;
+}
+
+.cuisine-any__emoji {
+  flex: none;
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+.cuisine-any__name {
+  flex: none;
+  font-weight: 800;
+}
+
+.cuisine-any__hint {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-small);
+  color: var(--color-on-surface-variant);
+}
+
+.cuisine-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.625rem;
+}
+
+/* 可用宽度 < 300 每行 3 个；≥ 560 每行 6 个（12 刚好除尽） */
+@container (max-width: 299.98px) {
+  .cuisine-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@container (min-width: 560px) {
+  .cuisine-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+/* 极窄（浏览器放大 200% 再加大字）：每行 2 个，格子不会窄过手指 */
+@container (max-width: 11rem) {
+  .cuisine-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.cuisine-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  min-height: 72px;
+  padding: 0.5rem 0.125rem;
+}
+
+.cuisine-cell__emoji {
+  font-size: 26px;
+  line-height: 1.2;
+  transition: transform 300ms var(--ease-bounce);
+}
+
+.cuisine-cell.is-selected .cuisine-cell__emoji {
+  transform: scale(1.1);
+}
+
+.cuisine-cell__name {
+  max-width: 100%;
+  font-size: var(--fs-tiny);
+  line-height: 1.2;
+  text-align: center;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.is-selected .cuisine-cell__name,
+.is-selected .cuisine-any__name {
+  font-weight: 800;
+}
+
+.cuisine-check {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.cuisine-hint {
+  font-size: 0.9375rem;
+  color: var(--color-on-surface-variant);
+  line-height: 1.5;
+}
+
+/* ---- 搜索范围卡 ---- */
+.radius-card {
+  padding: 0.75rem 1rem 0.5rem;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-low);
+}
+
+.radius-card__label {
+  font-weight: 800;
+}
+
+.radius-slider {
+  --fill: 22%;
+  display: block;
+  width: 100%;
+  height: var(--tap);
+  margin: 0;
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+  touch-action: pan-y;
+}
+
+.radius-slider::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(to right, var(--color-primary) var(--fill), var(--color-surface-container-highest) var(--fill));
+}
+
+.radius-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 24px;
+  height: 24px;
+  margin-top: -9px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-primary);
+  box-shadow: var(--shadow-1);
+}
+
+.radius-slider::-moz-range-track {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--color-surface-container-highest);
+}
+
+.radius-slider::-moz-range-progress {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--color-primary);
+}
+
+.radius-slider::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-primary);
+}
+
+.radius-card__ends {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--fs-tiny);
+  color: var(--color-on-surface-variant);
+}
+
+/* ---- 状态行 ---- */
+.home__status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  text-align: center;
+}
+
+.status-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: var(--fs-small);
+  font-weight: 500;
+  color: var(--color-on-surface-variant);
+}
+
+.status-line--quota {
+  color: var(--color-tertiary);
+  font-weight: 600;
+}
+
+/* ===== 底栏 ===== */
+.undo-strip {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--motion-medium) var(--ease-standard);
+}
+
+.undo-strip.is-open {
+  grid-template-rows: 1fr;
+}
+
+.undo-strip__clip {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.undo-strip__body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding: 0.25rem 0.25rem 0.25rem 1rem;
+  border-radius: var(--radius-md);
+  background: var(--color-inverse-surface);
+  color: var(--color-inverse-on-surface);
+}
+
+.undo-strip__text {
+  min-width: 0;
+}
+
+.undo-strip__action {
+  flex: none;
+  min-width: var(--tap);
+  min-height: var(--tap);
+  padding-inline: 1rem;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--color-inverse-primary);
+  font-weight: 800;
+}
+
+.home-bar__main {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* 又窄又矮（小手机、字体放大、浏览器放大）：拿掉「② 饭还是面？」那几个字，省一行；高的手机照样写 */
+@media (max-height: 700px) {
+  @container (max-width: 340px) {
+    .home-bar__label {
+      display: none;
+    }
+
+    .home-bar__chips {
+      justify-content: center;
+    }
+  }
+}
+
+.home-bar__step {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.375rem;
+}
+
+.home-bar__label {
+  flex: none;
+  font-size: var(--fs-title-s);
+  font-weight: 800;
+}
+
+.home-bar__chips {
+  /* 两个小胶囊尽量跟标签在同一行：放不下时「已选」那个用「…」（至少留 7rem，看得到菜系的头一两个字），📏 不缩；
+     整组放不下（大字）就换到标签下面一行；极窄（浏览器放大 + 大字）时两个胶囊各占一行。
+     13.5rem ≈ 「已选」最少 7rem + 间隔 + 📏 那个胶囊 */
+  flex: 1 1 13.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.25rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.home-bar__chips .chip {
+  min-width: 0;
+  padding-inline: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.chip--selected {
+  background: color-mix(in srgb, var(--color-primary-container) 40%, transparent);
+  color: var(--color-primary);
+}
+
+.home-bar__chips .chip--selected {
+  flex: 1 1 7rem;
+  max-width: max-content;
+}
+
+.chip--radius {
+  flex: none;
+  background: var(--color-tertiary-container);
+  color: var(--color-on-tertiary-container);
+}
+
+.home-bar__eat {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.625rem;
+}
+
+/* 极窄（浏览器放大 200% 再加大字）：三个大按钮排成三行，字不会被挤成一个字一行 */
+@container (max-width: 10.5rem) {
+  .home-bar__eat {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.5rem;
+  }
+
+  .home-bar__eat .eat-btn {
+    flex-direction: row;
+    gap: 0.5rem;
+    min-height: 52px;
+  }
+}
+
+.eat-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.125rem;
+  min-width: 0;
+  min-height: 76px;
+  padding: 0.375rem 0.25rem;
+  border: 0;
+  border-radius: 20px;
+  color: #fff;
+  font-size: 1.25rem;
+  font-weight: 900;
+  line-height: 1.15;
+  box-shadow: 0 6px 10px -2px rgb(58 16 0 / 0.28);
+  transition: transform var(--motion-fast) var(--ease-standard);
+}
+
+.eat-btn:active {
+  transform: scale(0.94);
+}
+
+.eat-btn--rice {
+  background: var(--gradient-rice);
+}
+
+.eat-btn--noodle {
+  background: var(--gradient-noodle);
+}
+
+.eat-btn--any {
+  background: var(--gradient-any);
+}
+
+.eat-btn__emoji {
+  font-size: 30px;
+  line-height: 1.15;
+}
+
+.eat-btn__text {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.15);
+}
+
+/* ===== 紧凑（可用高度 < 600） ===== */
+@media (max-height: 655.98px) {
+  .home__content {
+    gap: 0.625rem;
+  }
+
+  .home__title {
+    font-size: clamp(1.625rem, 1.25rem + 2vw, 2rem);
+  }
+
+  .dice-entry {
+    min-height: var(--tap);
+  }
+
+  .cuisine-cell {
+    min-height: 64px;
+  }
+
+  .eat-btn {
+    min-height: 64px;
+    font-size: 1.125rem;
+  }
+
+  .eat-btn__emoji {
+    font-size: 26px;
+  }
+}
+
+/* ===== 又窄又矮（浏览器放大 200%）：底栏放在内容最下面，跟着滑 ===== */
+@media (max-height: 475.98px) and (max-width: 559.98px) {
+  :root {
+    scroll-padding-bottom: 8px;
+  }
+
+  .home .bottom-bar {
+    position: static;
+    box-shadow: none;
+  }
+
+  .home.screen {
+    padding-bottom: 0;
+  }
+
+  .snackbar-holder {
+    bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+
+  .eat-btn {
+    min-height: 56px;
+    font-size: 1.0625rem;
+  }
+
+  .eat-btn__emoji {
+    font-size: 22px;
+  }
+}
+
+/* ===== 手机横屏（可用高度 < 420，而且够宽；很窄又很矮 = 浏览器放大，照紧凑排） ===== */
+@media (max-height: 475.98px) and (min-width: 560px) {
+  .home__hello {
+    flex-wrap: wrap;
+  }
+
+  .home__title {
+    flex-basis: auto;
+    font-size: 1.5rem;
+  }
+
+  .home__subtitle {
+    display: none;
+  }
+
+  .home-bar__main {
+    flex-direction: row;
+    align-items: stretch;
+    gap: 0.625rem;
+  }
+
+  .home-bar__label {
+    display: none;
+  }
+
+  /* 「已选」（最宽 150）和「📏」放在三个大按钮左边；横屏够宽，并排放，底栏只有一个按钮高 */
+  .home-bar__step {
+    flex: 0 1 auto;
+    min-width: 0;
+    align-items: center;
+  }
+
+  .home-bar__chips {
+    flex: 0 1 auto;
+    margin-left: 0;
+  }
+
+  .chip--selected {
+    max-width: 150px;
+  }
+
+  .home-bar__eat {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .eat-btn {
+    flex-direction: row;
+    gap: 0.375rem;
+    min-height: 52px;
+    font-size: 1.125rem;
+  }
+
+  .eat-btn__emoji {
+    font-size: 26px;
+  }
+}

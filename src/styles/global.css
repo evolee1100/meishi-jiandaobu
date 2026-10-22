@@ -1,0 +1,350 @@
+/*
+ * 美食剪刀布：全局样式
+ * - 颜色照安卓第四版 Theme.kt（辣椒橙、参巴红、咖椰金、班兰绿），浅色 / 深色两套；
+ * - 大小全部用 rem：用户在手机或浏览器里把字调大，整个页面一起变大，不会挤爆；
+ * - 用户开了「减少动画」，所有 CSS 动画和过渡立刻走完（Web Animations 用 src/lib/motion.ts）。
+ * 深色模式默认跟着系统；在 <html> 上加 data-theme="light" 或 "dark" 可以强制指定。
+ */
+
+:root {
+  color-scheme: light;
+
+  /* ===== 颜色（浅色）===== */
+  --color-primary: #d9480f;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #ffdbc8;
+  --color-on-primary-container: #3a1000;
+  --color-secondary: #c92a2a;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #ffdad6;
+  --color-on-secondary-container: #410002;
+  --color-tertiary: #9a6b00;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #ffe08a;
+  --color-on-tertiary-container: #2f2000;
+  --color-background: #fff8f3;
+  --color-on-background: #2a1a12;
+  --color-surface: #fff8f3;
+  --color-on-surface: #2a1a12;
+  --color-surface-variant: #f7ded2;
+  --color-on-surface-variant: #53433b;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #fff1ea;
+  --color-surface-container: #fbeae1;
+  --color-surface-container-high: #f5e4db;
+  --color-surface-container-highest: #efded5;
+  --color-surface-dim: #e8d6cd;
+  --color-surface-bright: #fff8f3;
+  --color-outline: #85736a;
+  --color-outline-variant: #d8c2b7;
+  --color-inverse-surface: #3f2e26;
+  --color-inverse-on-surface: #ffede5;
+  --color-inverse-primary: #ffb590;
+  --color-error: #ba1a1a;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #410002;
+
+  /* 好玩的大按钮和营业状态（安卓版 FoodColors）。三个大按钮上都是白字。 */
+  --gradient-rice: linear-gradient(135deg, #ff922b, #e8590c);
+  --gradient-noodle: linear-gradient(135deg, #ff6b6b, #c92a2a);
+  --gradient-any: linear-gradient(135deg, #37b24d, #2b8a3e);
+  --gradient-photo-placeholder: linear-gradient(135deg, #ffd08a, #ffa94d);
+  /* 店卡没有照片时的底（安卓 FOOD_COLORS.photoPlaceholderLight，上到下） */
+  --gradient-thumb: linear-gradient(180deg, #ffd08a, #ffa94d);
+  --color-open: #2b8a3e;
+  --color-closing: #d9480f;
+  --color-closed: #6c6c6c;
+  /* 启动图标的底色 */
+  --color-brand: #ff7a1a;
+
+  /* ===== 阴影（带一点暖色）===== */
+  --shadow-1: 0 1px 2px rgb(58 16 0 / 0.12), 0 1px 3px 1px rgb(58 16 0 / 0.08);
+  --shadow-2: 0 2px 6px 2px rgb(58 16 0 / 0.1), 0 1px 2px rgb(58 16 0 / 0.14);
+  --shadow-3: 0 6px 16px 4px rgb(58 16 0 / 0.12), 0 2px 4px rgb(58 16 0 / 0.14);
+
+  /* ===== 文字 ===== */
+  --font-sans:
+    system-ui, -apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', 'Noto Sans CJK SC',
+    'Source Han Sans SC', 'Microsoft YaHei', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji';
+  --font-numeric: ui-rounded, var(--font-sans);
+  --text-display: 2.25rem;
+  --text-headline: 1.75rem;
+  --text-title: 1.375rem;
+  --text-title-small: 1.125rem;
+  --text-body: 1rem;
+  --text-body-small: 0.875rem;
+  --text-caption: 0.8125rem;
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+
+  /* ===== 间距、圆角、尺寸 ===== */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-full: 999px;
+  /* 手指好按：最少 48px，跟着字体一起放大 */
+  --tap-min: 3rem;
+  /* 手机优先；电脑上把内容放在中间一栏 */
+  --page-max-width: 40rem;
+  --page-gutter: 1rem;
+
+  /* ===== 动画（减少动画时全部变成 0）===== */
+  --motion-fast: 120ms;
+  --motion-medium: 240ms;
+  --motion-slow: 480ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-out: cubic-bezier(0.05, 0.7, 0.1, 1);
+  /* 有一点弹性，按钮、骰子、彩带用 */
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ===== 颜色（深色）：跟着系统，或者 data-theme="dark" 强制 ===== */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --color-primary: #ffb590;
+    --color-on-primary: #5a1b00;
+    --color-primary-container: #7f2b00;
+    --color-on-primary-container: #ffdbc8;
+    --color-secondary: #ffb4ab;
+    --color-on-secondary: #690005;
+    --color-secondary-container: #93000a;
+    --color-on-secondary-container: #ffdad6;
+    --color-tertiary: #f2c14e;
+    --color-on-tertiary: #3e2e00;
+    --color-tertiary-container: #5a4300;
+    --color-on-tertiary-container: #ffe08a;
+    --color-background: #1d120d;
+    --color-on-background: #f2dfd6;
+    --color-surface: #1d120d;
+    --color-on-surface: #f2dfd6;
+    --color-surface-variant: #53433b;
+    --color-on-surface-variant: #d8c2b7;
+    --color-surface-container-lowest: #170d09;
+    --color-surface-container-low: #261a14;
+    --color-surface-container: #2a1e18;
+    --color-surface-container-high: #352822;
+    --color-surface-container-highest: #41322b;
+    --color-surface-dim: #1d120d;
+    --color-surface-bright: #463730;
+    --color-outline: #a08d83;
+    --color-outline-variant: #53433b;
+    --color-inverse-surface: #f2dfd6;
+    --color-inverse-on-surface: #3f2e26;
+    --color-inverse-primary: #d9480f;
+    --color-error: #ffb4ab;
+    --color-on-error: #690005;
+    --color-error-container: #93000a;
+    --color-on-error-container: #ffdad6;
+    --gradient-photo-placeholder: linear-gradient(135deg, #6b3a1e, #4a2a18);
+    --gradient-thumb: linear-gradient(180deg, #6b3a1e, #4a2a18);
+    --color-open: #8ce99a;
+    --color-closing: #ffa94d;
+    /* 安卓版只有浅色的灰；深底上 #6c6c6c 太暗，改用 outline 色 */
+    --color-closed: #a08d83;
+    --shadow-1: 0 1px 2px rgb(0 0 0 / 0.4), 0 1px 3px 1px rgb(0 0 0 / 0.25);
+    --shadow-2: 0 2px 6px 2px rgb(0 0 0 / 0.3), 0 1px 2px rgb(0 0 0 / 0.4);
+    --shadow-3: 0 6px 16px 4px rgb(0 0 0 / 0.3), 0 2px 4px rgb(0 0 0 / 0.4);
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-primary: #ffb590;
+  --color-on-primary: #5a1b00;
+  --color-primary-container: #7f2b00;
+  --color-on-primary-container: #ffdbc8;
+  --color-secondary: #ffb4ab;
+  --color-on-secondary: #690005;
+  --color-secondary-container: #93000a;
+  --color-on-secondary-container: #ffdad6;
+  --color-tertiary: #f2c14e;
+  --color-on-tertiary: #3e2e00;
+  --color-tertiary-container: #5a4300;
+  --color-on-tertiary-container: #ffe08a;
+  --color-background: #1d120d;
+  --color-on-background: #f2dfd6;
+  --color-surface: #1d120d;
+  --color-on-surface: #f2dfd6;
+  --color-surface-variant: #53433b;
+  --color-on-surface-variant: #d8c2b7;
+  --color-surface-container-lowest: #170d09;
+  --color-surface-container-low: #261a14;
+  --color-surface-container: #2a1e18;
+  --color-surface-container-high: #352822;
+  --color-surface-container-highest: #41322b;
+  --color-surface-dim: #1d120d;
+  --color-surface-bright: #463730;
+  --color-outline: #a08d83;
+  --color-outline-variant: #53433b;
+  --color-inverse-surface: #f2dfd6;
+  --color-inverse-on-surface: #3f2e26;
+  --color-inverse-primary: #d9480f;
+  --color-error: #ffb4ab;
+  --color-on-error: #690005;
+  --color-error-container: #93000a;
+  --color-on-error-container: #ffdad6;
+  --gradient-photo-placeholder: linear-gradient(135deg, #6b3a1e, #4a2a18);
+  --gradient-thumb: linear-gradient(180deg, #6b3a1e, #4a2a18);
+  --color-open: #8ce99a;
+  --color-closing: #ffa94d;
+  --color-closed: #a08d83;
+  --shadow-1: 0 1px 2px rgb(0 0 0 / 0.4), 0 1px 3px 1px rgb(0 0 0 / 0.25);
+  --shadow-2: 0 2px 6px 2px rgb(0 0 0 / 0.3), 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-3: 0 6px 16px 4px rgb(0 0 0 / 0.3), 0 2px 4px rgb(0 0 0 / 0.4);
+}
+
+/* ===== 减少动画：CSS 动画和过渡立刻走完 ===== */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-medium: 0ms;
+    --motion-slow: 0ms;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ===== 基础 ===== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  /* 不写死 px：跟着用户在浏览器 / 手机里设的字体大小走 */
+  font-size: 100%;
+  font-family: var(--font-sans);
+  line-height: var(--leading-normal);
+  background-color: var(--color-background);
+  color: var(--color-on-background);
+  -webkit-tap-highlight-color: transparent;
+  /* 手机上连点两下不会放大页面（双指放大照样可以） */
+  touch-action: manipulation;
+}
+
+/* iPhone / iPad：跟着「设置 → 显示与亮度 → 文字大小」放大（默认 17px）。
+   只在触屏的 Safari 内核上生效，电脑上的 Safari 不受影响。 */
+@supports (font: -apple-system-body) and (-webkit-touch-callout: none) {
+  html {
+    font: -apple-system-body;
+    font-family: var(--font-sans);
+    line-height: var(--leading-normal);
+  }
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background-color: var(--color-background);
+  color: var(--color-on-background);
+  /* 很长的英文 / 马来文店名也不会把页面撑宽 */
+  overflow-wrap: break-word;
+}
+
+h1,
+h2,
+h3,
+h4,
+p,
+figure,
+blockquote,
+ul,
+ol {
+  margin: 0;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  line-height: var(--leading-tight);
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+img,
+svg,
+video,
+canvas {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+}
+
+button {
+  cursor: pointer;
+  /* 去掉双击放大的等待，按下去马上有反应 */
+  touch-action: manipulation;
+}
+
+button:disabled {
+  cursor: default;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+#root {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== 页面外框：手机全宽，电脑放在中间；避开刘海和底部横条 ===== */
+.page {
+  flex: 1;
+  width: 100%;
+  max-width: var(--page-max-width);
+  margin-inline: auto;
+  padding-top: max(var(--page-gutter), env(safe-area-inset-top));
+  padding-right: max(var(--page-gutter), env(safe-area-inset-right));
+  padding-bottom: max(var(--page-gutter), env(safe-area-inset-bottom));
+  padding-left: max(var(--page-gutter), env(safe-area-inset-left));
+}
+
+/* 只给读屏软件看的文字 */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}

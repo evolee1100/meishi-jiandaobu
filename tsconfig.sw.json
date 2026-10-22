@@ -1,0 +1,11 @@
+{
+  // 离线缓存（service worker）：跑在 worker 里，没有 document / window。
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.sw.tsbuildinfo",
+    "lib": ["ES2023", "WebWorker"],
+    "types": []
+  },
+  "include": ["src/sw"]
+}

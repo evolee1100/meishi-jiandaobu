@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="zh-CN" translate="no">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- 不禁止双指放大：看不清的人可以自己放大 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
+    <!-- 英文界面的手机 Chrome 不要提议把整页中文翻成英文 -->
+    <meta name="google" content="notranslate" />
+    <!-- 支持的浏览器会按手机系统的字体大小放大页面文字 -->
+    <meta name="text-scale" content="scale" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#D9480F" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1D120D" media="(prefers-color-scheme: dark)" />
+    <meta name="description" content="今天想吃什么？专挑附近 Google 评价最好的 3 家，剪刀石头布帮你决定。" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="美食剪刀布" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/icons/favicon-32.png" sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <title>美食剪刀布</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>美食剪刀布要打开 JavaScript 才能用，请在浏览器设置里打开。</noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

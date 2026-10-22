@@ -1,0 +1,1167 @@
+/*
+ * 结果页（安卓 ResultsScreen.kt，功能清单第十一节）。
+ * 手机优先：单栏、左右 16px（加安全区）；顶上固定演示条；底栏固定在下面（BottomBar）。
+ * 手机横屏（高 ≤ 480、宽 ≥ 640）：底栏变成右边 280 宽的一栏，按钮从下往上排（拇指按得到）。
+ * 很窄（320 宽加大字、浏览器放大 200%）：用容器查询改排法（店卡照片放上面、底栏两个按钮上下排）。
+ * 字号用 rem（跟着系统字体放大）；当图案用的 emoji 用 px（不会把格子撑爆）。
+ */
+
+/* ---------------------------------------------------------------- 营业状态的颜色 */
+.tone-open {
+  color: var(--color-open);
+}
+
+.tone-closing_soon {
+  color: var(--color-closing);
+}
+
+.tone-closed,
+.tone-unknown {
+  color: var(--color-on-surface-variant);
+}
+
+/* ---------------------------------------------------------------- 外框 */
+.screen.results {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.screen.results:has(.bottom-bar:not(.bottom-bar--inline)) {
+  padding-bottom: calc(var(--bottom-bar-h) + 0.75rem);
+}
+
+:root:has(.results .demo-strip) {
+  scroll-padding-top: calc(var(--topbar-height, var(--topbar-h)) + var(--demo-strip-h, 2.5rem) + 8px);
+}
+
+/* 演示条：反色、粗体居中，固定在标题栏下面不跟着滑（每张演示截图都带着它） */
+.results .demo-strip {
+  position: sticky;
+  top: var(--topbar-height, calc(var(--topbar-h) + env(safe-area-inset-top)));
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.25rem;
+  padding: 0.375rem var(--gutter-right) 0.375rem var(--gutter-left);
+  background: var(--color-inverse-surface);
+  color: var(--color-inverse-on-surface);
+  font-size: var(--fs-title-s);
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: center;
+}
+
+@media (max-height: 480px) {
+  .results .demo-strip {
+    top: 0;
+  }
+
+  :root:has(.results .demo-strip) {
+    scroll-padding-top: calc(var(--demo-strip-h, 2.5rem) + 8px);
+  }
+}
+
+.results__list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 4px var(--gutter-right) 1rem var(--gutter-left);
+}
+
+/* ---------------------------------------------------------------- 表头 */
+.results-head {
+  container: results-head / inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* 「🤝 这一餐已经定了：…　看一看」：整条可以按，比一般的按钮矮一点（不挤掉第三家） */
+.meal-strip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: 44px;
+  padding: 3px 0.75rem;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-secondary-container);
+  color: var(--color-on-secondary-container);
+  font-size: var(--fs-small);
+  font-weight: 700;
+  text-align: start;
+  transition: transform var(--motion-fast) var(--ease-standard);
+}
+
+.meal-strip:active {
+  transform: scale(0.98);
+}
+
+.meal-strip__text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meal-strip__look {
+  flex: none;
+  color: var(--color-primary);
+}
+
+/* 「附近最强 3 家・日本餐・面」：几段不能拆开的字，只在「・」后面换行 */
+.results-title {
+  margin-top: 2px;
+  font-size: var(--fs-headline-s);
+  font-weight: 900;
+  line-height: 1.3;
+  color: var(--color-primary);
+  text-wrap: wrap;
+}
+
+.results-title__seg {
+  display: inline-block;
+  max-width: 100%;
+}
+
+.results-subtitle {
+  color: var(--color-on-surface-variant);
+  font-size: 0.9375rem;
+  line-height: 1.4;
+}
+
+.results-expand {
+  min-height: var(--tap);
+  padding: 0.25rem 0.375rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-align: start;
+}
+
+.results-note {
+  font-size: var(--fs-tiny);
+  line-height: 1.4;
+}
+
+.results-note--cached {
+  color: var(--color-tertiary);
+}
+
+.results-note--partial {
+  color: var(--color-error);
+}
+
+.results-partial {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.results-partial .results-note {
+  flex: 1;
+  min-width: 0;
+}
+
+.results-partial__again {
+  flex: none;
+  padding-inline: 0.75rem;
+  font-size: var(--fs-small);
+}
+
+/* 「只看营业中」+「📤 发到群里投票」：最窄时上下两行、写全；够宽并排写短；再宽并排写全（安卓 250×字体倍数+40 / 190×字体倍数+40） */
+.results-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.open-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 4px 10px 4px 14px;
+  border: 0;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-low);
+  color: var(--color-on-surface);
+  text-align: start;
+  transition: background-color var(--motion-fast);
+}
+
+.open-toggle:active {
+  background: color-mix(in srgb, var(--color-on-surface) 8%, var(--color-surface-container-low));
+}
+
+.open-toggle__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.open-toggle__title {
+  font-size: var(--fs-body);
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.open-toggle__hidden {
+  font-size: var(--fs-tiny);
+  line-height: 1.35;
+  color: var(--color-on-surface-variant);
+}
+
+.open-toggle__hidden--short,
+.share-vote__short {
+  display: none;
+}
+
+.share-vote {
+  flex: none;
+  padding-inline: 0.75rem;
+  font-size: 0.9375rem;
+  white-space: nowrap;
+}
+
+/* 最窄（浏览器放大、大字）：开关放到字下面，字有整行可以排 */
+@container results-head (max-width: 14rem) {
+  .open-toggle {
+    flex-wrap: wrap;
+  }
+
+  .open-toggle__text {
+    flex-basis: 100%;
+  }
+
+  .open-toggle > .switch {
+    margin-left: auto;
+  }
+}
+
+@container results-head (min-width: calc(11.875rem + 40px)) {
+  .results-tools {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .open-toggle {
+    flex: 1;
+    width: auto;
+  }
+
+  .open-toggle__hidden--full,
+  .share-vote__full {
+    display: none;
+  }
+
+  .open-toggle__hidden--short,
+  .share-vote__short {
+    display: block;
+  }
+}
+
+@container results-head (min-width: calc(15.625rem + 40px)) {
+  .open-toggle__hidden--full,
+  .share-vote__full {
+    display: block;
+  }
+
+  .open-toggle__hidden--short,
+  .share-vote__short {
+    display: none;
+  }
+}
+
+/* ---------------------------------------------------------------- 几段字中间夹「 · 」（只画在同一行的两段中间） */
+.sep-flow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  min-width: 0;
+}
+
+.sep-flow__piece {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.sep-flow__sep {
+  white-space: pre;
+}
+
+.sep-flow__sep--gap {
+  display: inline-block;
+  width: 4px;
+}
+
+.sep-flow__piece.is-line-start > .sep-flow__sep {
+  display: none;
+}
+
+.sep-flow__break {
+  display: none;
+  flex-basis: 100%;
+  height: 0;
+}
+
+.sep-flow__break.is-on {
+  display: block;
+}
+
+/* ---------------------------------------------------------------- 店卡 */
+.place-list {
+  container: place-list / inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.place-card {
+  --thumb: 88px;
+  position: relative;
+  display: flex;
+  gap: 12px;
+  padding: 10px;
+  border-radius: 20px;
+  background: var(--color-surface-container-low);
+  box-shadow: var(--shadow-1);
+  animation: card-in var(--motion-medium) var(--ease-out);
+}
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* 窄屏大字（宽 < 400、字体 > 1.15 倍）：小照片，字少换几行 */
+.results--tight .place-card {
+  --thumb: 72px;
+  gap: 8px;
+  padding: 8px;
+}
+
+.place-card__left {
+  flex: none;
+  width: var(--thumb);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.place-card__nav {
+  width: 100%;
+  min-width: 0;
+  min-height: var(--tap);
+  gap: 4px;
+  padding: 0.25rem 6px;
+  font-size: var(--fs-body);
+  white-space: nowrap;
+}
+
+.results--tight .place-card__nav {
+  padding-inline: 2px;
+  font-size: var(--fs-small);
+}
+
+.place-card__nav-icon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+.place-card__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.place-card__address {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-small);
+  color: var(--color-on-surface-variant);
+}
+
+.place-card__visited {
+  font-size: var(--fs-tiny);
+  font-weight: 700;
+  color: var(--color-tertiary);
+}
+
+.place-card__author {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-tiny);
+  color: var(--color-on-surface-variant);
+}
+
+/* 很窄（320 宽加大字、浏览器放大 200%）：照片放上面，字有整行可以排，「导航」放最下面整行 */
+@container place-list (max-width: calc(9.5rem + 104px)) {
+  .place-card {
+    --thumb: 72px;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px;
+  }
+
+  .place-card__left {
+    display: contents;
+  }
+
+  .place-card__body {
+    order: 1;
+  }
+
+  .place-name--link {
+    margin-right: 0;
+  }
+
+  .place-card__nav {
+    order: 2;
+  }
+}
+
+/* 照片（或 emoji）：圆角 16，左上角名次；按一下打开店家的 Google 地图页面 */
+.place-thumb {
+  position: relative;
+  flex: none;
+  width: var(--thumb);
+  height: var(--thumb);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: var(--gradient-thumb);
+}
+
+.place-thumb--link {
+  cursor: pointer;
+}
+
+.place-thumb__emoji {
+  font-size: calc(var(--thumb) * 0.45);
+  line-height: 1.2;
+}
+
+.place-thumb__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: cover;
+}
+
+.place-thumb__spinner {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  width: 16px;
+  height: 16px;
+  color: var(--color-primary);
+}
+
+.place-thumb__badge {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+}
+
+.rank-badge {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+  color: var(--color-primary);
+  font-size: 14px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.rank-badge--medal {
+  font-size: 18.6px;
+}
+
+/* 店名：最多两行「…」；「机翻」小标签放得下就跟在后面，放不下换行；下面原名 / 大概意思 */
+.place-name {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  padding-right: 34px;
+  text-align: start;
+}
+
+/* 整块可以按（店家页面）：上下多 11px 的按区，手指好按，排版不变（盖在评分行上面一点点）；右边让开 ❤️ */
+.place-name--link {
+  position: relative;
+  z-index: 1;
+  width: auto;
+  margin: -11px 38px -11px 0;
+  padding: 11px 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.place-name--link:active .place-name__name {
+  text-decoration: underline;
+}
+
+.place-name__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 6px;
+  min-width: 0;
+}
+
+.place-name__name {
+  display: -webkit-box;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  font-size: var(--fs-title-m);
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.place-name--large .place-name__name {
+  font-size: var(--fs-title-l);
+}
+
+.place-name__original,
+.place-name__rough {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-small);
+  line-height: 1.4;
+  color: color-mix(in srgb, var(--color-on-surface) 80%, transparent);
+}
+
+.place-name__rough {
+  color: var(--color-on-surface-variant);
+}
+
+.small-tag {
+  flex: none;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-tiny);
+  font-weight: 700;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.small-tag--tertiary {
+  background: var(--color-tertiary-container);
+  color: var(--color-on-tertiary-container);
+}
+
+.small-tag--inverse {
+  background: var(--color-inverse-surface);
+  color: var(--color-inverse-on-surface);
+}
+
+.rating-line,
+.price-hours {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.price-hours__label {
+  font-weight: 700;
+}
+
+.price-hours__detail {
+  font-weight: 400;
+  color: var(--color-on-surface-variant);
+}
+
+.price-hours__detail.is-open {
+  color: var(--color-on-surface);
+}
+
+/* ❤️ / 🤍：右上角 48×48 圆形可以按；现在不能去的店 🤍 变淡 */
+.heart-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  transition: transform var(--motion-fast) var(--ease-bounce);
+}
+
+.heart-btn:active {
+  transform: scale(0.88);
+}
+
+.heart-btn__emoji {
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+.heart-btn--faded .heart-btn__emoji {
+  opacity: 0.35;
+}
+
+/* ---------------------------------------------------------------- 📊 计票板 */
+.vote-board {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 12px;
+  border-radius: 18px;
+  background: var(--color-secondary-container);
+  color: var(--color-on-secondary-container);
+}
+
+.vote-board__head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.vote-board__titles {
+  flex: 1;
+  min-width: 0;
+}
+
+.vote-board__title {
+  font-size: var(--fs-title-m);
+  font-weight: 700;
+}
+
+.vote-board__hint {
+  font-size: var(--fs-tiny);
+  font-weight: 500;
+}
+
+.vote-board__close {
+  flex: none;
+  padding-inline: 0.75rem;
+}
+
+.vote-board__rows {
+  container: vote-rows / inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.vote-row {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 2px;
+  min-height: var(--tap);
+}
+
+.vote-row__marker {
+  flex: none;
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+.vote-row__name {
+  flex: 1;
+  min-width: 0;
+  padding-inline: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-body);
+  font-weight: 500;
+}
+
+.vote-row__btn {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--tap);
+  height: var(--tap);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-on-secondary-container) 8%, transparent);
+  color: inherit;
+  font-size: 1.375rem;
+  font-weight: 700;
+  line-height: 1;
+  transition: transform var(--motion-fast) var(--ease-standard);
+}
+
+.vote-row__btn:active:not(:disabled) {
+  transform: scale(0.9);
+}
+
+.vote-row__btn:disabled {
+  opacity: 0.38;
+  cursor: default;
+}
+
+.vote-row__count {
+  flex: none;
+  min-width: 40px;
+  font-size: var(--fs-title-l);
+  font-weight: 900;
+  text-align: center;
+}
+
+/* 很窄：店名一整行，－ 票数 ＋ 放在下面靠右 */
+@container vote-rows (max-width: 15rem) {
+  .vote-row {
+    flex-wrap: wrap;
+  }
+
+  .vote-row__name {
+    flex-basis: calc(100% - 30px);
+    white-space: normal;
+  }
+
+  .vote-row__name + .vote-row__btn {
+    margin-left: auto;
+  }
+}
+
+.vote-board__finish {
+  margin-top: 2px;
+}
+
+/* ---------------------------------------------------------------- 救援卡 */
+.rescue-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 1rem;
+  border-radius: 20px;
+  background: var(--color-tertiary-container);
+  color: var(--color-on-tertiary-container);
+  text-align: center;
+}
+
+.rescue-card__title {
+  font-size: var(--fs-title-m);
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.rescue-card__note {
+  font-size: var(--fs-tiny);
+  font-weight: 500;
+}
+
+.rescue-card__expand {
+  border-color: color-mix(in srgb, var(--color-on-tertiary-container) 55%, transparent);
+  color: var(--color-on-tertiary-container);
+}
+
+.rescue-card__all {
+  color: var(--color-on-tertiary-container);
+  font-size: var(--fs-small);
+}
+
+/* ---------------------------------------------------------------- 看完了、页脚 */
+.list-end {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding-top: 4px;
+  color: var(--color-on-surface-variant);
+  text-align: center;
+}
+
+.list-end__done {
+  font-size: var(--fs-small);
+  font-weight: 600;
+}
+
+.list-end__note {
+  font-size: var(--fs-tiny);
+}
+
+.results-foot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding-top: 4px;
+}
+
+.results-foot__source {
+  font-size: var(--fs-tiny);
+  font-weight: 500;
+  color: var(--color-on-surface-variant);
+}
+
+/* ---------------------------------------------------------------- 底栏 */
+.results-bar .bottom-bar__inner {
+  container: results-bar / inline-size;
+  display: flex;
+  flex-direction: column;
+  padding-top: 6px;
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
+}
+
+/* 出现 / 收起有一点滑动（提示条、撤销条）；收起时还显示原来的字 */
+.slide-row {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows var(--motion-medium) var(--ease-standard),
+    opacity var(--motion-medium);
+}
+
+.slide-row.is-open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  animation: slide-open var(--motion-medium) var(--ease-standard);
+}
+
+@keyframes slide-open {
+  from {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+}
+
+.slide-row__inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.bar-notice {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  margin-bottom: 4px;
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  background: var(--color-inverse-surface);
+  color: var(--color-inverse-on-surface);
+  font-size: var(--fs-small);
+  text-align: center;
+}
+
+.bar-undo {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: var(--tap);
+  margin-bottom: 4px;
+  padding: 0 4px 0 16px;
+  border-radius: var(--radius-md);
+  background: var(--color-inverse-surface);
+  color: var(--color-inverse-on-surface);
+}
+
+.bar-undo__text {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-small);
+}
+
+.bar-undo__btn {
+  flex: none;
+  min-width: var(--tap);
+  min-height: var(--tap);
+  padding-inline: 0.75rem;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--color-inverse-primary);
+  font-weight: 700;
+}
+
+.bar-undo__btn:active {
+  background: color-mix(in srgb, var(--color-inverse-on-surface) 12%, transparent);
+}
+
+/* ❤️ 一行：只有一行（放不下「…」），按钮 44 高，第三张卡的名字和星数还在第一屏 */
+.basket-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.basket-row__text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-small);
+  font-weight: 500;
+  color: var(--color-primary);
+}
+
+.basket-row__table,
+.basket-row__clear {
+  flex: none;
+  min-height: 44px;
+  font-size: var(--fs-small);
+  white-space: nowrap;
+}
+
+.basket-row__table {
+  margin-left: 6px;
+  padding-inline: 10px;
+}
+
+.basket-row__clear {
+  padding-inline: 8px;
+}
+
+.results-bar__row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.page-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 56px;
+  padding: 6px 10px;
+  border-radius: 20px;
+  font-size: var(--fs-title-s);
+  font-weight: 700;
+}
+
+.page-btn--half {
+  flex: 34 1 0;
+}
+
+.decide-btn,
+.decide-hint {
+  flex: 66 1 0;
+  min-width: 0;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  text-align: center;
+}
+
+.is-with-basket .page-btn,
+.is-with-basket .decide-btn,
+.is-with-basket .decide-hint {
+  min-height: 52px;
+}
+
+/* 决定按钮：「吃饭」渐层的第一个颜色到「吃面」渐层的最后一个颜色（横向），深色模式也一样 */
+.decide-btn {
+  border: 0;
+  background: linear-gradient(90deg, #ff922b, #c92a2a);
+  color: #fff;
+  font-size: var(--fs-title-s);
+  font-weight: 700;
+  line-height: 1.3;
+  box-shadow: 0 3px 8px rgb(201 42 42 / 0.35);
+  transition: transform var(--motion-fast) var(--ease-standard);
+}
+
+.decide-btn:active {
+  transform: scale(0.97);
+}
+
+.decide-btn__text {
+  min-width: 0;
+}
+
+/* 中文没有空格也能断行：只在空格处断（「🎡 用我圈的 / 5 家转转盘」），一段比整行还长才在里面断 */
+.decide-btn__text .phrase,
+.page-btn .phrase {
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+/* ✊ 每 4 秒轻轻摇两下：0–3400 不动，3550 +12°、3700 −12°、3850 +12°、4000 回 0 */
+.decide-btn__fist {
+  flex: none;
+  display: inline-block;
+  font-size: 22px;
+  line-height: 1.2;
+  animation: fist-wiggle 4s linear infinite;
+}
+
+@keyframes fist-wiggle {
+  0%,
+  85% {
+    transform: rotate(0deg);
+  }
+  88.75% {
+    transform: rotate(12deg);
+  }
+  92.5% {
+    transform: rotate(-12deg);
+  }
+  96.25% {
+    transform: rotate(12deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+.decide-hint {
+  background: var(--color-surface-container-high);
+  color: var(--color-on-surface-variant);
+  font-size: var(--fs-small);
+  line-height: 1.4;
+}
+
+/* 最窄的手机（320）：不摇 ✊，字有整个按钮的宽（不会断成三行） */
+@container results-bar (max-width: 19rem) {
+  .decide-btn__fist {
+    display: none;
+  }
+}
+
+/* 很窄（浏览器放大 200% 等）：❤️ 那行的字一整行；两个大按钮的字小一号（底栏不会占掉大半个画面） */
+@container results-bar (max-width: 15rem) {
+  .basket-row {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .basket-row__text {
+    flex-basis: 100%;
+  }
+
+  .results-bar__row {
+    gap: 6px;
+  }
+
+  .page-btn,
+  .decide-btn,
+  .decide-hint {
+    padding-inline: 6px;
+    font-size: var(--fs-tiny);
+  }
+
+  .bar-notice {
+    padding: 6px 10px;
+    font-size: var(--fs-tiny);
+  }
+}
+
+/* ---------------------------------------------------------------- 手机横屏：按钮放右边一栏（宽 280），从下往上排 */
+.results--side .results__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  align-items: start;
+}
+
+/* 游戏层、饭桌盖在上面时列表整个藏起来（上面的 display: grid 不能把 hidden 盖掉，不然横屏时列表会从游戏下面露出来） */
+.results__layout[hidden] {
+  display: none;
+}
+
+.results--side .results__list {
+  padding-right: 8px;
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+}
+
+.results-bar--side.bottom-bar {
+  position: sticky;
+  left: auto;
+  right: auto;
+  bottom: 0;
+  align-self: end;
+  width: 280px;
+  max-width: none;
+  margin: 0;
+  border-top: 0;
+  background: var(--color-background);
+}
+
+.results-bar--side .bottom-bar__inner {
+  padding: 8px var(--gutter-right) max(10px, env(safe-area-inset-bottom)) 8px;
+}
+
+.results-bar--side .results-bar__row {
+  flex-direction: column;
+}
+
+.results-bar--side .page-btn,
+.results-bar--side .decide-btn,
+.results-bar--side .decide-hint {
+  flex: none;
+  width: 100%;
+  min-height: 52px;
+}
+
+/* ---------------------------------------------------------------- 分享、复制都不行：长按复制 */
+.manual-copy-dialog__title {
+  font-size: var(--fs-title-m);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .place-card,
+  .decide-btn__fist {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------- 又窄又矮（浏览器放大 200%）：演示条、底栏跟着内容滑（和首页一样），内容有地方看 */
+@media (max-height: 475.98px) and (max-width: 559.98px) {
+  .results .bottom-bar {
+    position: static;
+    box-shadow: none;
+  }
+
+  .screen.results:has(.bottom-bar:not(.bottom-bar--inline)) {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .results .demo-strip {
+    position: static;
+  }
+
+  :root:has(.results .demo-strip) {
+    scroll-padding-top: 8px;
+  }
+}

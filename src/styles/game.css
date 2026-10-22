@@ -1,0 +1,1115 @@
+/*
+ * 游戏层（安卓 DuelOverlay.kt / LuckyWheel.kt / ResultPage.kt，功能清单第十二、十三节）：
+ * 剪刀石头布、帮我挑一家、🎡 转盘、「就这一家吧！」、🃏 任务卡、🎯 谁来做。
+ * 手机优先：单栏、左右 16px（加安全区），内容最宽 480 置中；比较矮的手机紧凑一点；
+ * 手机横屏（很矮又够宽）左右两栏（最宽 860）。字号用 rem（跟着系统字体放大），当图案用的 emoji 用 px（不会把卡片撑爆）。
+ * 动画都是 CSS / Web Animations；「减少动画」时 global.css 让 CSS 动画马上走完，Web Animations 用 playAnimation()。
+ */
+
+:root {
+  /* 🎡 转盘每格的颜色（安卓 LuckyWheel.LightSlices / DarkSlices），字：浅色深棕、深色白 */
+  --wheel-0: #ffc078;
+  --wheel-1: #ffa8a8;
+  --wheel-2: #8ce99a;
+  --wheel-3: #74c0fc;
+  --wheel-4: #e599f7;
+  --wheel-5: #ffe066;
+  --wheel-text: #2a1a12;
+  /* 🃏 任务卡背面（深色模式也一样） */
+  --task-back: linear-gradient(to bottom right, #5f3dc4, #c2255c);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --wheel-0: #9c4a00;
+    --wheel-1: #8f2d2d;
+    --wheel-2: #2b6e3a;
+    --wheel-3: #1f5c8c;
+    --wheel-4: #6e3a82;
+    --wheel-5: #7a6200;
+    --wheel-text: #ffffff;
+  }
+}
+
+:root[data-theme='dark'] {
+  --wheel-0: #9c4a00;
+  --wheel-1: #8f2d2d;
+  --wheel-2: #2b6e3a;
+  --wheel-3: #1f5c8c;
+  --wheel-4: #6e3a82;
+  --wheel-5: #7a6200;
+  --wheel-text: #ffffff;
+}
+
+/* ---------------------------------------------------------------- 外框 */
+
+/* 盖在列表上：页面底色挡住下面。自己一层（彩带在内容下面）。出现时淡入 + 从下面滑上来。
+   （不用 transform：彩带是 position: fixed，祖先有 transform 会跟着跑掉） */
+.game-layer {
+  position: relative;
+  z-index: 0;
+  flex: 1;
+  min-width: 0;
+  padding: 14px var(--gutter-right) calc(16px + env(safe-area-inset-bottom)) var(--gutter-left);
+  background: var(--color-background);
+  animation: game-layer-in var(--motion-medium) var(--ease-out);
+}
+
+@keyframes game-layer-in {
+  from {
+    opacity: 0;
+    top: 16dvh;
+  }
+
+  to {
+    top: 0;
+  }
+}
+
+/* 游戏画面 ↔ 结果：新的淡入 + 从下面 1/4 滑上来 */
+.game-scene {
+  position: relative;
+  z-index: 1;
+  animation: game-scene-in var(--motion-slow) var(--ease-out);
+}
+
+@keyframes game-scene-in {
+  from {
+    opacity: 0;
+    transform: translateY(12%);
+  }
+}
+
+.game-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 30rem;
+  margin-inline: auto;
+}
+
+.game-layer--compact .game-column {
+  gap: 8px;
+}
+
+/* 手机横屏：左右两栏，不用滑就同时看到 App 的手和你的三个手势（或结果和按钮） */
+.game-layer--two-pane {
+  padding-top: 12px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+}
+
+.game-layer--two-pane .game-column {
+  max-width: 53.75rem;
+  gap: 8px;
+}
+
+.game-panes {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+}
+
+.game-panes--wide-end {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+}
+
+.game-panes--result {
+  align-items: start;
+}
+
+.game-pane {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.game-pane--start {
+  gap: 6px;
+}
+
+/* ---------------------------------------------------------------- 标题、规则、已跳过 */
+.game-heading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  text-align: center;
+}
+
+.game-heading__title {
+  font-size: var(--fs-title-l);
+  font-weight: 900;
+  line-height: 1.3;
+  color: var(--color-primary);
+}
+
+.game-heading__rule {
+  font-size: var(--fs-small);
+  line-height: 1.45;
+  color: var(--color-on-surface-variant);
+}
+
+.game-heading--small .game-heading__title {
+  font-size: var(--fs-title-m);
+}
+
+.game-heading--small .game-heading__rule {
+  font-size: var(--fs-tiny);
+}
+
+.skipped-note {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--color-surface-container-high);
+  font-size: var(--fs-small);
+  font-weight: 500;
+  line-height: 1.45;
+  text-align: center;
+}
+
+/* 停在这一家！/ 转啊转… / 转！👆：先留好高度，不会跳动 */
+.game-status {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: 40px;
+  text-align: center;
+}
+
+.game-status__stop {
+  font-size: var(--fs-headline-s);
+  font-weight: 900;
+  line-height: 1.3;
+  animation: fade-in var(--motion-medium) var(--ease-standard);
+}
+
+.game-status__spinning {
+  font-size: var(--fs-title-m);
+  font-weight: 500;
+  color: var(--color-on-surface-variant);
+}
+
+.game-status__hint {
+  font-size: var(--fs-title-m);
+  font-weight: 500;
+  color: var(--color-primary);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* 🥇🥈🥉，第 4 名起小圆圈里的数字 */
+.small-rank {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-primary-container);
+  color: var(--color-on-primary-container);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.small-rank--medal {
+  width: auto;
+  height: auto;
+  background: none;
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+/* ---------------------------------------------------------------- ✊✌️🖐️ 剪刀石头布 */
+
+/* App 的手：一个圆，等你出拳时 ❓；转的时候卷轴往上滑、整个圆左右抖 ±6°；停下边框变主色 */
+.app-hand {
+  --hand-size: 112px;
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--hand-size);
+  height: var(--hand-size);
+  overflow: hidden;
+  border-radius: 50%;
+  border: 3px solid var(--color-outline-variant);
+  background: var(--color-surface-container-high);
+}
+
+.app-hand.is-spinning {
+  animation: app-hand-shake 120ms linear infinite alternate;
+}
+
+.app-hand.is-stopped {
+  border: 4px solid var(--color-primary);
+}
+
+@keyframes app-hand-shake {
+  from {
+    rotate: -6deg;
+  }
+
+  to {
+    rotate: 6deg;
+  }
+}
+
+.app-hand__emoji {
+  font-size: calc(var(--hand-size) * 0.5);
+  line-height: 1.2;
+}
+
+.app-hand__window {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  /* 上下邻居越远越淡 */
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 22%, #000 78%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 22%, #000 78%, transparent);
+}
+
+.app-hand__strip {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  will-change: transform;
+}
+
+.app-hand__cell {
+  display: grid;
+  place-items: center;
+  font-size: calc(var(--hand-size) * 0.5);
+  line-height: 1;
+}
+
+.app-hand-status {
+  font-size: var(--fs-small);
+  font-weight: 500;
+  color: var(--color-on-surface-variant);
+  text-align: center;
+}
+
+/* 「VS」→ 停了以后换成大字判定（先留好高度） */
+.vs-box {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: 44px;
+  text-align: center;
+}
+
+.game-layer--two-pane .vs-box {
+  min-height: 36px;
+}
+
+.vs-box__vs {
+  font-size: var(--fs-title-l);
+  font-weight: 900;
+  color: var(--color-tertiary);
+}
+
+.vs-box__verdict {
+  font-size: var(--fs-headline-s);
+  font-weight: 900;
+  line-height: 1.3;
+  animation: fade-in var(--motion-medium) var(--ease-standard);
+}
+
+.game-layer--two-pane .vs-box__verdict {
+  font-size: var(--fs-title-l);
+}
+
+/* 你的三个手势：一排三张同宽同高的卡 */
+.hand-cards {
+  container: hand-cards / inline-size;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+}
+
+.hand-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  min-height: 150px;
+  padding: 22px 6px 10px;
+  border: 2px solid var(--color-outline-variant);
+  border-radius: 20px;
+  background: var(--color-surface-container-low);
+  color: var(--color-on-surface);
+  text-align: center;
+  transition:
+    opacity var(--motion-medium) var(--ease-standard),
+    scale var(--motion-fast) var(--ease-standard);
+}
+
+.hand-card:active:not(:disabled) {
+  scale: 0.94;
+}
+
+.hand-card:disabled {
+  cursor: default;
+  color: var(--color-on-surface);
+}
+
+.hand-card.is-chosen {
+  scale: 1.05;
+  padding: 21px 5px 9px;
+  border: 3px solid var(--color-primary);
+  background: var(--color-primary-container);
+  color: var(--color-on-primary-container);
+}
+
+.hand-card.is-winner {
+  padding: 21px 5px 9px;
+  border: 3px solid var(--color-tertiary);
+}
+
+.hand-card__rank {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+}
+
+.hand-card__cup {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.hand-card__emoji {
+  font-size: 48px;
+  line-height: 1.2;
+}
+
+.hand-card__hand {
+  font-size: var(--fs-title-s);
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.hand-card__name {
+  display: -webkit-box;
+  max-width: 100%;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  font-size: var(--fs-tiny);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+.hand-card__rank-text {
+  font-size: var(--fs-tiny);
+  font-weight: 500;
+  color: var(--color-on-surface-variant);
+}
+
+.hand-card.is-chosen .hand-card__rank-text {
+  color: inherit;
+}
+
+.hand-card__unknown {
+  max-width: 100%;
+  padding: 1px 4px;
+  border-radius: 6px;
+  background: var(--color-surface-container-highest);
+  color: var(--color-on-surface-variant);
+  font-size: var(--fs-tiny);
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+/* 很窄（浏览器放大 200%、最窄的手机加大字）：三张卡改成上下排，字有整行可以排 */
+@container hand-cards (max-width: 13rem) {
+  .hand-card {
+    grid-column: 1 / -1;
+    min-height: 0;
+  }
+}
+
+.hand-hint {
+  font-size: var(--fs-small);
+  font-weight: 500;
+  color: var(--color-primary);
+  text-align: center;
+}
+
+.game-switch-table {
+  min-height: 56px;
+  padding: 8px 12px;
+  font-size: var(--fs-title-s);
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+/* ---------------------------------------------------------------- 🎲 帮我挑一家 */
+.roulette-cards {
+  container: roulette-cards / inline-size;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+/* 亮的：放大一点、主色框；暗的：变淡（轮流亮灯，没有过渡，一格一格跳） */
+.roulette-card {
+  --thumb: 72px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  min-height: 168px;
+  padding: 12px;
+  border: 2px solid var(--color-outline-variant);
+  border-radius: 20px;
+  background: var(--color-surface-container-low);
+  opacity: 0.55;
+  text-align: center;
+}
+
+.roulette-card.is-lit {
+  opacity: 1;
+  scale: 1.04;
+  padding: 11px;
+  border: 3px solid var(--color-primary);
+  background: var(--color-primary-container);
+  color: var(--color-on-primary-container);
+}
+
+.roulette-card__name {
+  display: -webkit-box;
+  max-width: 100%;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  font-size: var(--fs-title-s);
+  font-weight: 700;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+.roulette-card__facts,
+.roulette-card__rank,
+.roulette-card__unknown {
+  font-size: var(--fs-tiny);
+  line-height: 1.35;
+  color: var(--color-on-surface-variant);
+}
+
+.roulette-card.is-lit .roulette-card__facts,
+.roulette-card.is-lit .roulette-card__rank,
+.roulette-card.is-lit .roulette-card__unknown {
+  color: inherit;
+}
+
+.roulette-card__rank,
+.roulette-card__unknown {
+  font-weight: 500;
+}
+
+.roulette-card__cup {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+@container roulette-cards (max-width: 14rem) {
+  .roulette-card {
+    grid-column: 1 / -1;
+    min-height: 0;
+  }
+}
+
+/* ---------------------------------------------------------------- 🎡 转盘 */
+.lucky-wheel {
+  position: relative;
+  width: 100%;
+  margin-inline: auto;
+  aspect-ratio: 1;
+}
+
+.lucky-wheel__svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.lucky-wheel__slice--0 {
+  fill: var(--wheel-0);
+}
+
+.lucky-wheel__slice--1 {
+  fill: var(--wheel-1);
+}
+
+.lucky-wheel__slice--2 {
+  fill: var(--wheel-2);
+}
+
+.lucky-wheel__slice--3 {
+  fill: var(--wheel-3);
+}
+
+.lucky-wheel__slice--4 {
+  fill: var(--wheel-4);
+}
+
+.lucky-wheel__slice--5 {
+  fill: var(--wheel-5);
+}
+
+.lucky-wheel__line {
+  fill: none;
+  stroke: color-mix(in srgb, var(--color-outline) 60%, transparent);
+  stroke-width: 2;
+}
+
+/* 停的那一格：和白色混一点（亮度跟着闪），再描一圈主色 */
+.lucky-wheel__glow {
+  fill: #ffffff;
+}
+
+.lucky-wheel__ring {
+  fill: none;
+  stroke: var(--color-primary);
+  stroke-linejoin: round;
+}
+
+.lucky-wheel__rim {
+  fill: none;
+  stroke: var(--color-outline);
+  stroke-width: 4;
+}
+
+.lucky-wheel__pointer {
+  fill: var(--color-primary);
+}
+
+.lucky-wheel__label {
+  fill: var(--wheel-text);
+  font-weight: 700;
+}
+
+/* 中间的「转！」：圆心比正中往下一点（和转盘一样） */
+.lucky-wheel__center {
+  position: absolute;
+  left: 50%;
+  top: var(--hub-y, 50%);
+  translate: -50% -50%;
+}
+
+.wheel-spin-btn {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  padding: 0;
+  border: 3px solid var(--color-surface);
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: var(--fs-title-l);
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: var(--shadow-3);
+  transition: scale var(--motion-fast) var(--ease-standard);
+}
+
+.wheel-spin-btn:active:not(:disabled) {
+  scale: 0.92;
+}
+
+.wheel-spin-btn:disabled {
+  background: var(--color-surface-container-highest);
+  color: var(--color-on-surface-variant);
+}
+
+/* ---------------------------------------------------------------- 🎉 彩带（画在内容下面） */
+.confetti {
+  position: fixed;
+  z-index: 0;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  max-width: var(--column-max);
+  margin-inline: auto;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.confetti__piece {
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: 22px;
+  line-height: 1.2;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+/* ---------------------------------------------------------------- 「就这一家吧！」 */
+
+/* 字都垫页面底色：彩带在字后面飞，字缝里不会透出来 */
+.backdrop {
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: var(--color-background);
+}
+
+/* 透明的按钮也垫页面底色 */
+.btn--page {
+  background: var(--color-background);
+}
+
+.result-title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: center;
+}
+
+.result-title__verdict {
+  font-size: var(--fs-headline-s);
+  font-weight: 900;
+  line-height: 1.33;
+}
+
+.result-title__main {
+  font-size: var(--fs-headline-m);
+  font-weight: 900;
+  line-height: 1.3;
+  color: var(--color-primary);
+}
+
+.result-title__line {
+  font-size: var(--fs-title-m);
+  font-weight: 700;
+  line-height: 1.45;
+  color: var(--color-tertiary);
+}
+
+.result-title__record {
+  font-size: var(--fs-small);
+  line-height: 1.45;
+  color: var(--color-on-surface-variant);
+}
+
+.result-title--small {
+  gap: 6px;
+}
+
+.result-title--small .result-title__verdict {
+  font-size: var(--fs-title-l);
+}
+
+.result-title--small .result-title__main {
+  font-size: var(--fs-headline-s);
+}
+
+/* 今天吃的这家：凸起的卡片 */
+.winner-card {
+  --thumb: 112px;
+  container: winner-card / inline-size;
+  width: 100%;
+  padding: 12px;
+  border-radius: 24px;
+  background: var(--color-surface-container-low);
+  box-shadow: var(--shadow-2);
+}
+
+.winner-card__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.winner-card__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.winner-card .place-name {
+  padding-right: 0;
+}
+
+.winner-card__badge {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.winner-card__address {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-tiny);
+  color: var(--color-on-surface-variant);
+}
+
+.winner-card__from {
+  font-size: var(--fs-tiny);
+  font-weight: 500;
+  color: var(--color-on-surface-variant);
+}
+
+.winner-card__rush {
+  padding: 8px 4px 0;
+  font-size: var(--fs-title-m);
+  font-weight: 900;
+  line-height: 1.45;
+  color: var(--color-closing);
+  text-align: center;
+}
+
+/* 很窄：照片放上面，字有整行可以排 */
+@container winner-card (max-width: 17rem) {
+  .winner-card__row {
+    flex-direction: column;
+  }
+}
+
+.result-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  width: 100%;
+  container: result-buttons / inline-size;
+}
+
+.result-buttons__navigate {
+  min-height: 52px;
+  font-size: var(--fs-title-m);
+  font-weight: 600;
+}
+
+.result-buttons__nav-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.result-buttons__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.result-buttons__regret {
+  flex: 1.4 1 0;
+  min-width: 0;
+  padding: 6px 10px;
+  border-color: var(--color-outline-variant);
+  font-size: var(--fs-small);
+  font-weight: 500;
+}
+
+.result-buttons__back {
+  flex: 1 1 0;
+  min-width: 0;
+  font-weight: 500;
+}
+
+.result-buttons__share {
+  font-size: var(--fs-title-s);
+  font-weight: 600;
+}
+
+.result-buttons__restart {
+  align-self: center;
+  font-size: var(--fs-small);
+  font-weight: 500;
+  color: var(--color-on-surface-variant);
+}
+
+/* 很窄（浏览器放大 200%）：「不服」和「回到列表」上下排 */
+@container result-buttons (max-width: 15rem) {
+  .result-buttons__row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .result-buttons__regret,
+  .result-buttons__back {
+    flex: none;
+  }
+}
+
+/* 「🔒 这一餐定了」+ 怎么定的：灰色小字，不是按钮 */
+.settled-note {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  color: var(--color-on-surface-variant);
+}
+
+.settled-note__title {
+  font-size: var(--fs-small);
+  font-weight: 500;
+}
+
+.settled-note__line {
+  font-size: var(--fs-small);
+  line-height: 1.45;
+}
+
+/* 复制好了：说一声，再给「用 WhatsApp 发」 */
+.share-copied {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  text-align: center;
+}
+
+.share-copied__text {
+  font-size: var(--fs-small);
+  font-weight: 500;
+}
+
+.share-copied__whatsapp {
+  border-color: var(--color-outline-variant);
+  font-size: var(--fs-small);
+  color: var(--color-on-surface);
+}
+
+/* ---------------------------------------------------------------- 🃏 任务卡、🎯 谁来做 */
+.task-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.task-section__stats {
+  font-size: var(--fs-small);
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--color-on-surface-variant);
+  text-align: center;
+}
+
+.task-card {
+  width: 100%;
+  perspective: 900px;
+}
+
+.task-card__inner {
+  display: grid;
+  transform-style: preserve-3d;
+}
+
+.task-card.is-drawn .task-card__inner {
+  transform: rotateY(180deg);
+}
+
+.task-card__face {
+  grid-area: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 100%;
+  min-height: 76px;
+  padding: 10px 14px;
+  border-radius: 18px;
+  text-align: center;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+/* 背面：紫红渐层（深色模式也一样） */
+.task-card__back {
+  border: 2px solid rgb(255 255 255 / 0.5);
+  background: var(--task-back);
+  color: #ffffff;
+  font: inherit;
+  transition: scale var(--motion-fast) var(--ease-standard);
+}
+
+button.task-card__back:active {
+  scale: 0.98;
+}
+
+.task-card__title {
+  font-size: var(--fs-title-m);
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+.task-card__note {
+  font-size: var(--fs-tiny);
+  font-weight: 500;
+  color: rgb(255 255 255 / 0.85);
+}
+
+/* 正面：翻过来以后才看得到 */
+.task-card__front {
+  transform: rotateY(180deg);
+  border: 2px solid var(--color-tertiary);
+  background: linear-gradient(to top right, var(--color-primary-container), var(--color-tertiary-container));
+  color: var(--color-on-tertiary-container);
+}
+
+.task-card__label {
+  font-size: var(--fs-small);
+  font-weight: 500;
+}
+
+.task-card__text {
+  font-size: var(--fs-title-l);
+  font-weight: 900;
+  line-height: 1.3;
+}
+
+/* 刚翻开、刚转、刚停时滚进画面：下面多留一点，避开手机底部的横条 */
+.reveal-margin {
+  scroll-margin-bottom: 72px;
+}
+
+.task-who {
+  min-height: 52px;
+  border-color: var(--color-outline-variant);
+  font-size: var(--fs-title-m);
+  font-weight: 500;
+  color: var(--color-on-surface);
+}
+
+.people-chooser {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding-block: 4px;
+}
+
+.people-chooser__title {
+  font-size: var(--fs-title-m);
+  font-weight: 700;
+}
+
+.people-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+}
+
+/* 先按最小的 48 排（放得下就一排 5 个），再长到 56 */
+.people-row__btn {
+  flex: 1 0 48px;
+  display: grid;
+  place-items: center;
+  min-width: 48px;
+  max-width: 56px;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 2px solid var(--color-outline-variant);
+  border-radius: 50%;
+  background: var(--color-surface-container-high);
+  color: var(--color-on-surface);
+  font-size: var(--fs-headline-s);
+  font-weight: 900;
+  line-height: 1;
+  transition: scale var(--motion-fast) var(--ease-standard);
+}
+
+.people-row__btn:active {
+  scale: 0.92;
+}
+
+.task-wheel {
+  width: 100%;
+}
+
+.task-assigned {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.task-assigned__who {
+  font-size: var(--fs-headline-s);
+  font-weight: 900;
+  line-height: 1.33;
+  color: var(--color-primary);
+}
+
+.task-assigned__card {
+  font-size: var(--fs-title-m);
+  font-weight: 700;
+}
+
+.game-free-note {
+  font-size: var(--fs-tiny);
+  line-height: 1.45;
+  color: var(--color-on-surface-variant);
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-layer,
+  .game-scene,
+  .app-hand.is-spinning {
+    animation: none;
+  }
+}
